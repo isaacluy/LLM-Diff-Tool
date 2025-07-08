@@ -3,6 +3,7 @@
 A modern web application for comparing responses from different Large Language Models (LLMs) side-by-side. Compare OpenAI GPT models with Anthropic Claude, analyze performance metrics, and visualize differences with intelligent highlighting.
 
 ![image](https://github.com/user-attachments/assets/7fbaf992-6410-47f3-9371-6ac0e161dccf)
+![image](https://github.com/user-attachments/assets/4f64ae7f-f9e4-4ce0-baa2-0d594f2020c3)
 
 ## ✨ Features
 
