@@ -356,14 +356,19 @@
             <div class="config-row">
                 <div class="config-group">
                     <label for="endpoint1">Model 1 Endpoint:</label>
-                    <input type="text" id="endpoint1" placeholder="https://api.openai.com/v1/chat/completions" 
-                           value="https://api.openai.com/v1/chat/completions">
+                    <input type="text" id="endpoint1" placeholder="https://api.openai.com/v1/responses" 
+                           value="https://api.openai.com/v1/responses">
                 </div>
                 <div class="config-group">
                     <label for="endpoint2">Model 2 Endpoint:</label>
+                    <input type="text" id="endpoint2" placeholder="https://generativelanguage.googleapis.com/v1beta/models" 
+                        value="https://generativelanguage.googleapis.com/v1beta/models">
+                </div>
+                <!-- <div class="config-group">
+                    <label for="endpoint2">Model 2 Endpoint:</label>
                     <input type="text" id="endpoint2" placeholder="https://api.anthropic.com/v1/messages" 
                            value="https://api.anthropic.com/v1/messages">
-                </div>
+                </div> -->
             </div>
             
             <div class="config-row">
@@ -373,24 +378,24 @@
                 </div>
                 <div class="config-group">
                     <label for="apikey2">Model 2 API Key:</label>
-                    <input type="password" id="apikey2" placeholder="sk-...">
+                    <input type="password" id="apikey2" placeholder="AI...">
                 </div>
             </div>
             
             <div class="config-row">
                 <div class="config-group">
                     <label for="model1">Model 1 Name:</label>
-                    <input type="text" id="model1" placeholder="gpt-4" value="gpt-4">
+                    <input type="text" id="model1" placeholder="gpt-5-nano" value="gpt-5-nano">
                 </div>
                 <div class="config-group">
                     <label for="model2">Model 2 Name:</label>
-                    <input type="text" id="model2" placeholder="claude-3-sonnet-20240229" value="claude-3-sonnet-20240229">
+                    <input type="text" id="model2" placeholder="gemini-2.5-flash" value="gemini-2.5-flash">
                 </div>
             </div>
             
             <div class="config-group">
                 <label for="prompt">Prompt:</label>
-                <textarea id="prompt" placeholder="Enter your prompt here...">Explain the concept of machine learning in simple terms.</textarea>
+                <textarea id="prompt" placeholder="Enter your prompt here...">In one sentence, explain sanathana dharma</textarea>
             </div>
             
             <div class="config-group">
@@ -468,6 +473,12 @@
                     callModel(endpoint2, apikey2, model2, prompt)
                 ]);
 
+                // console.group("\n\nResponses");
+                // console.log("Response 1\n", result1);
+                // console.log("\n\n");
+                // console.log("Response 2\n", result2);
+                // console.groupEnd()
+
                 // Display the comparison results
                 displayResults(result1, result2, model1, model2);
             } catch (error) {
@@ -480,49 +491,76 @@
         }
 
         /**
-         * Makes an API call to a specific LLM model
-         * @param {string} endpoint - The API endpoint URL
-         * @param {string} apiKey - The API key for authentication
-         * @param {string} model - The model identifier
-         * @param {string} prompt - The user prompt to send
-         * @returns {Promise<Object>} Response object containing content and metrics
-         */
+       * Makes an API call to a specific LLM model
+       * @param {string} endpoint - The API endpoint URL
+       * @param {string} apiKey - The API key for authentication
+       * @param {string} model - The model identifier
+       * @param {string} prompt - The user prompt to send
+       * @returns {Promise<Object>} Response object containing content and metrics
+       */
         async function callModel(endpoint, apiKey, model, prompt) {
             const startTime = Date.now();
             
             // Prepare the request payload in OpenAI format
             // This works for both OpenAI and Anthropic APIs with minor differences
-            const payload = {
+            let payload = {
                 model: model,
-                messages: [
+                input: [
                     {
                         role: "user",
                         content: prompt
                     }
                 ],
-                max_tokens: 1000,
-                temperature: 0.7
+                max_output_tokens: 1000
             };
 
-            // Make the API request
+            // Prepare headers, adding Anthropic-specific ones if needed
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            // --- API specific configurations ---
+            if (endpoint.includes('google')) {
+                // --- Gemini Configuration ---
+                // Gemini uses the API key in the URL
+                endpoint = `${endpoint}/${model}:generateContent`;
+                payload = {
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                };
+                headers["X-goog-api-key"] = `${apiKey}`;
+            } else {
+                headers["Authorization"] = `Bearer ${apiKey}`;
+            }
+
+            if (endpoint.includes('anthropic')) {
+                headers['anthropic-version'] = '2023-06-01';
+            }
+
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
+                headers: headers,
                 body: JSON.stringify(payload)
             });
 
             const endTime = Date.now();
             const responseTime = endTime - startTime;
-
-            // Check if the request was successful
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
             const data = await response.json();
+
+            // Enhanced error handling for more descriptive messages
+            if (!response.ok) {
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                // Check for OpenAI, Google or Anthropic specific error messages in the response body
+                if (data && data.error && data.error.message) {
+                    errorMessage = data.error.message;
+                } else if (data && data.type === 'error' && data.error.type) {
+                    errorMessage = data.error.message;
+                }
+                throw new Error(errorMessage);
+            }
             
             // Initialize default values for response parsing
             let content = '';
@@ -530,9 +568,13 @@
             let completionTokens = 0;
             let totalTokens = 0;
 
+            // console.group("DATA");
+            // console.log(data);
+            // console.groupEnd();
+
             // Parse response based on API format (OpenAI vs Anthropic)
             if (data.choices && data.choices[0] && data.choices[0].message) {
-                // OpenAI format
+                // OpenAI format Completions
                 content = data.choices[0].message.content;
                 if (data.usage) {
                     promptTokens = data.usage.prompt_tokens || 0;
@@ -547,6 +589,27 @@
                     completionTokens = data.usage.output_tokens || 0;
                     totalTokens = promptTokens + completionTokens;
                 }
+            } else if(data.output_text) {
+                // OpenAI format Responses v1
+                content = data.output_text;
+                if (data.usage) {
+                    promptTokens = data.usage.prompt_tokens || 0;
+                    completionTokens = data.usage.completion_tokens || 0;
+                    totalTokens = promptTokens + completionTokens;
+                }
+            } else if(data.output && data.output[1] && data.output[1].content && data.output[1].content[0]){
+                // OpenAI format Responses v2
+                content = data.output[1].content[0].text;
+                if (data.usage) {
+                    promptTokens = data.usage.input_tokens || 0;
+                    completionTokens = data.usage.output_tokens || 0;
+                    totalTokens = promptTokens + completionTokens;
+                }
+            } else if(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]){
+                content = data.candidates[0].content.parts[0].text;
+                promptTokens = -1; // No data from Google APIs
+                completionTokens = -1; // No data from Google APIs
+                totalTokens = -1; // No data from Google APIs
             } else {
                 throw new Error('Unexpected response format');
             }
