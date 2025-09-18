@@ -1,6 +1,6 @@
 # LLM Model Response Diff Tool 🔍
 
-A modern web application for comparing responses from different Large Language Models (LLMs) side-by-side. Compare OpenAI GPT models with Anthropic Claude, analyze performance metrics, and visualize differences with highlighting.
+A modern web application for comparing responses from different Large Language Models (LLMs) side-by-side. Compare OpenAI GPT models with Google Gemini or Anthropic, analyze performance metrics, and visualize differences with highlighting.
 
 ![image](https://github.com/user-attachments/assets/7fbaf992-6410-47f3-9371-6ac0e161dccf)
 ![image](https://github.com/user-attachments/assets/4f64ae7f-f9e4-4ce0-baa2-0d594f2020c3)
@@ -10,7 +10,7 @@ A modern web application for comparing responses from different Large Language M
 - **🔀 Side-by-Side Comparison**: Compare responses from any two LLM models
 - **⚡ Real-Time Metrics**: Track response time, token usage, and performance
 - **🎨 Intelligent Highlighting**: Visual diff highlighting to spot differences at a glance
-- **🌐 Multi-Provider Support**: Works with OpenAI, Anthropic, and any OpenAI-compatible APIs
+- **🌐 Multi-Provider Support**: Works with OpenAI, Google Gemini and Anthropic
 - **📱 Responsive Design**: Beautiful, modern UI that works on desktop and mobile
 - **🔒 Secure**: API keys are never stored or transmitted to external servers
 - **⚙️ Configurable**: Flexible endpoint and model configuration
@@ -37,7 +37,7 @@ python -m http.server 8000  # Then visit http://localhost:8000
 1. **Configure Your Models**
    - Enter API endpoints for both models
    - Add your API keys (stored locally only)
-   - Specify model names (e.g., `gpt-4`, `claude-3-sonnet-20240229`)
+   - Specify model names (e.g., `gpt-5-nano`, `gemini-2.5-flash`, `claude-3-sonnet-20240229`)
 
 2. **Enter Your Prompt**
    - Type or paste the prompt you want both models to respond to
@@ -55,8 +55,14 @@ python -m http.server 8000  # Then visit http://localhost:8000
 
 ### OpenAI
 ```
-Endpoint: https://api.openai.com/v1/chat/completions
+Endpoint: https://api.openai.com/v1/responses
 Models: gpt-4, gpt-4-turbo, gpt-3.5-turbo, etc.
+```
+
+### Google Gemini
+```
+Endpoint: https://generativelanguage.googleapis.com/v1beta/models
+Models: gemini-2.5-flash, gemini-2.5-pro, etc.
 ```
 
 ### Anthropic
@@ -65,7 +71,7 @@ Endpoint: https://api.anthropic.com/v1/messages
 Models: claude-3-opus-20240229, claude-3-sonnet-20240229, etc.
 ```
 
-### Custom/Local APIs
+### Local APIs
 Any API that follows the OpenAI chat completions format:
 ```
 Endpoint: http://localhost:8000/v1/chat/completions
@@ -76,21 +82,21 @@ Models: llama-2-7b, mistral-7b, etc.
 
 ### API Key Setup
 1. **OpenAI**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. **Anthropic**: Get your API key from [Anthropic Console](https://console.anthropic.com/)
-3. **Local Models**: Configure according to your local setup
+2. **Google Gemini**: Get your API key from [Google Gemini AI Studio](https://aistudio.google.com/)
+3. **Anthropic**: Get your API key from [Anthropic Console](https://console.anthropic.com/)
+4. **Local Models**: Configure according to your local setup
 
 ### Request Parameters
 The tool sends requests with these default parameters:
-- `max_tokens`: 1000
-- `temperature`: 0.7
+- `max_output_tokens`: 1000
 - Message format: OpenAI chat completions style
 
 ## 📊 Metrics Tracked
 
 - **Response Time**: How long each model took to respond
-- **Prompt Tokens**: Number of tokens in your input
-- **Completion Tokens**: Number of tokens in the model's response
-- **Total Tokens**: Combined token usage
+- **Prompt Tokens**: Number of tokens in your input (Not for Google Gemini)
+- **Completion Tokens**: Number of tokens in the model's response (Not for Google Gemini)
+- **Total Tokens**: Combined token usage (Not for Google Gemini)
 - **Model Names**: For easy identification
 
 ## 🎨 Features in Detail
@@ -135,6 +141,10 @@ Track and compare:
 - Some models may have longer response times
 
 ## 📝 Changelog
+
+### v1.0.1
+- Google Gemini support
+- OpenAI change from Completions API to Responses API
 
 ### v1.0.0
 - Initial release
